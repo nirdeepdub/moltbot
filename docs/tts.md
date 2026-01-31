@@ -302,8 +302,8 @@ Then run:
   - `tagged` only sends audio when the reply includes `[[tts]]` tags.
 - `enabled`: legacy toggle (doctor migrates this to `auto`).
 - `mode`: `"final"` (default) or `"all"` (includes tool/block replies).
-- `provider`: `"deepdub"`, `"elevenlabs"`, `"openai"`, `"deepdub"`, or `"edge"` (fallback is automatic).
-- If `provider` is **unset**, Moltbot prefers `openai` (if key), then `elevenlabs` (if key),
+- `provider`: `"deepdub"`, `"elevenlabs"`, `"openai"`, or `"edge"` (fallback is automatic).
+- If `provider` is **unset**, OpenClaw prefers `openai` (if key), then `elevenlabs` (if key),
   then `deepdub` (if key), otherwise `edge`.
 - `summaryModel`: optional cheap model for auto-summary; defaults to `agents.defaults.model.primary`.
   - Accepts `provider/model` or a configured model alias.

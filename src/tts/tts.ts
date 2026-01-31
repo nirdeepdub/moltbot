@@ -1233,6 +1233,7 @@ async function deepdubTTS(params: {
     const audioChunks: Buffer[] = [];
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
     let requestSent = false;
+    let resolved = false;
 
     const cleanup = () => {
       if (timeoutHandle) {
@@ -1241,30 +1242,45 @@ async function deepdubTTS(params: {
       }
     };
 
-    // Set up timeout
-    timeoutHandle = setTimeout(() => {
-      cleanup();
-      ws.close();
-      reject(new Error("Deepdub TTS request timed out"));
-    }, timeoutMs);
-
-    // Connect with API key header
+    // Connect with API key header (must be before setTimeout to avoid reference error)
     const ws = new WebSocket(wsUrl, {
       headers: {
         "x-api-key": apiKey,
       },
     });
 
-    ws.on("error", (err) => {
+    // Set up timeout after ws is initialized
+    timeoutHandle = setTimeout(() => {
       cleanup();
-      reject(new Error(`Deepdub WebSocket error: ${err.message}`));
+      ws.close();
+      if (!resolved) {
+        resolved = true;
+        reject(new Error("Deepdub TTS request timed out"));
+      }
+    }, timeoutMs);
+
+    ws.on("error", (err: Error) => {
+      cleanup();
+      ws.close();
+      if (!resolved) {
+        resolved = true;
+        reject(new Error(`Deepdub WebSocket error: ${err.message}`));
+      }
     });
 
     ws.on("close", () => {
       cleanup();
+      if (resolved) {
+        return;
+      }
       // If we have audio and request was sent, resolve with it
       if (audioChunks.length > 0 && requestSent) {
+        resolved = true;
         resolve(Buffer.concat(audioChunks));
+      } else {
+        // Close without audio - reject to allow fallback
+        resolved = true;
+        reject(new Error("Deepdub WebSocket closed without receiving audio"));
       }
     });
 
@@ -1285,16 +1301,30 @@ async function deepdubTTS(params: {
       requestSent = true;
     });
 
-    ws.on("message", (data) => {
+    ws.on("message", (data: Buffer | ArrayBuffer | Buffer[]) => {
       try {
-        const msg = JSON.parse(data.toString()) as Record<string, unknown>;
+        // Handle different data types from WebSocket
+        let dataStr: string;
+        if (Buffer.isBuffer(data)) {
+          dataStr = data.toString("utf8");
+        } else if (data instanceof ArrayBuffer) {
+          dataStr = Buffer.from(data).toString("utf8");
+        } else if (Array.isArray(data)) {
+          dataStr = Buffer.concat(data).toString("utf8");
+        } else {
+          dataStr = Buffer.from(data as Uint8Array).toString("utf8");
+        }
+        const msg = JSON.parse(dataStr) as Record<string, unknown>;
 
         // Handle error messages
         if (msg.error) {
           const errMsg = typeof msg.error === "string" ? msg.error : "Unknown Deepdub error";
           cleanup();
           ws.close();
-          reject(new Error(errMsg));
+          if (!resolved) {
+            resolved = true;
+            reject(new Error(errMsg));
+          }
           return;
         }
 
@@ -1314,11 +1344,15 @@ async function deepdubTTS(params: {
         if (msg.isFinished === true) {
           cleanup();
           ws.close();
-          resolve(Buffer.concat(audioChunks));
+          if (!resolved) {
+            resolved = true;
+            resolve(Buffer.concat(audioChunks));
+          }
         }
       } catch (err) {
         // JSON parse error - continue receiving
-        logVerbose(`Deepdub: failed to parse message: ${err}`);
+        const errMsg = err instanceof Error ? err.message : String(err);
+        logVerbose(`Deepdub: failed to parse message: ${errMsg}`);
       }
     });
   });
@@ -1476,6 +1510,7 @@ export async function textToSpeech(params: {
         // Set output format and extension based on format
         const formatExtensions: Record<string, string> = {
           wav: ".wav",
+          s16le: ".raw",
           mp3: ".mp3",
           opus: ".opus",
           mulaw: ".raw",
