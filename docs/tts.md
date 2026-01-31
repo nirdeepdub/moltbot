@@ -26,11 +26,64 @@ locales, and expressive synthesis. Deepdub is particularly well-suited for telep
 applications as it supports mulaw encoding at 8kHz (Twilio-compatible).
 
 Features:
+- You can generate different emotions by changing voice prompt ids of the same speaker.
 - Real-time streaming audio generation
 - 40+ locales including multilingual support
 - Multiple voice prompts and emotion styles
 - Configurable temperature for voice variation
 - Native telephony support (mulaw/8kHz)
+
+Here's a good voice to use, and when:
+# Each emotion maps to a voicePromptId and includes a description for the AI
+
+# Default voice prompt used when no emotion is specified
+default: "59da0f21-63de-4aef-9ade-e5cabfe639ab"
+
+# Available emotions with their voice prompt IDs and usage descriptions
+emotions:
+  slower:
+    voicePromptId: "169a245f-6dc9-48fb-8f5e-2c53c5942450"
+    description: "Use for calming situations, explaining complex information, or when clarity is important"
+
+  fast:
+    voicePromptId: "8988bba8-bada-40ba-990f-8c43bc851a18"
+    description: "Use for energetic conversations, time-sensitive information, or enthusiastic responses"
+
+  reading:
+    voicePromptId: "2c7d9b19-f0c8-49fa-81ac-ec59fdb8e23f"
+    description: "Use for neutral, informative content like reading facts, policies, or instructions"
+
+  apologetic:
+    voicePromptId: "6bfe6fa2-a013-4aa9-b8e0-c391e01611c6"
+    description: "Use when expressing sympathy, apologizing for issues, or acknowledging customer frustration"
+
+  formal:
+    voicePromptId: "215d9ce7-244e-4fbb-ac85-02f0a3104b3f"
+    description: "Use for professional contexts, important announcements, or corporate communications"
+
+  informal:
+    voicePromptId: "0c597f55-5bec-4873-ad12-2b115cb80281"
+    description: "Use for friendly, casual conversations and building rapport"
+
+  questions:
+    voicePromptId: "f9cdb58c-d50b-4810-acfa-923e58c37007"
+    description: "Use when asking questions or seeking information from the caller"
+
+  reassuring:
+    voicePromptId: "7578fca3-1f46-41bc-8da0-71daa92e93e3"
+    description: "Use for calming anxious callers, providing comfort, or confirming successful resolutions"
+
+  upsell:
+    voicePromptId: "6a7ca34c-db7c-4eb2-871a-0427bb5ab689"
+    description: "Use for promotional offers, suggesting upgrades, or highlighting additional services"
+
+  conversational:
+    voicePromptId: "dab93e7c-09a7-4ca4-b192-73fa219d11e9"
+    description: "Use for natural, flowing dialogue and general conversation"
+
+To get started with Deepdub:
+1. Sign up at [app.deepdub.ai](https://app.deepdub.ai) to get a trial API key
+2. Purchase additional credits directly via Stripe in the Deepdub dashboard
 
 ### Edge TTS notes
 
@@ -65,7 +118,8 @@ so that provider must also be authenticated if you enable summaries.
 - [OpenAI Audio API reference](https://platform.openai.com/docs/api-reference/audio)
 - [ElevenLabs Text to Speech](https://elevenlabs.io/docs/api-reference/text-to-speech)
 - [ElevenLabs Authentication](https://elevenlabs.io/docs/api-reference/authentication)
-- [Deepdub](https://www.deepdub.ai/)
+- [Deepdub](https://deepdub.ai/)
+- [Deepdub Dashboard](https://app.deepdub.ai) (API keys and credits)
 - [node-edge-tts](https://github.com/SchneeHertz/node-edge-tts)
 - [Microsoft Speech output formats](https://learn.microsoft.com/azure/ai-services/speech-service/rest-text-to-speech#audio-outputs)
 
@@ -96,7 +150,7 @@ Full schema is in [Gateway configuration](/gateway/configuration).
         apiKey: "deepdub_api_key",
         wsUrl: "wss://wsapi.deepdub.ai/open",
         model: "dd-etts-3.0",
-        voicePromptId: "5d3dc622-69bd-4c00-9513-05df47dbdea6_authoritative",
+        voicePromptId: "59da0f21-63de-4aef-9ade-e5cabfe639ab",
         locale: "en-US",
         temperature: 1.0,
         format: "mp3",
@@ -262,7 +316,7 @@ Then run:
 - `elevenlabs.languageCode`: 2-letter ISO 639-1 (e.g. `en`, `de`)
 - `elevenlabs.seed`: integer `0..4294967295` (best-effort determinism)
 - `deepdub.wsUrl`: WebSocket URL (default: `wss://wsapi.deepdub.ai/open`).
-- `deepdub.model`: TTS model (default: `dd-etts-2.5`).
+- `deepdub.model`: TTS model (default: `dd-etts-3.0`).
 - `deepdub.voicePromptId`: voice prompt ID for voice selection.
 - `deepdub.locale`: locale for TTS (default: `en-US`). Supports 40+ locales.
 - `deepdub.temperature`: voice variation.
